@@ -11,15 +11,91 @@ from sklearn.metrics import r2_score
 
 app_ui = ui.page_fluid(
 
-    ui.h2("Dashboard Estatístico - Shiny for Python"),
+    ui.tags.style(
+    """
+    body {
+        background-color: #181818;
+    }
+
+    .card {
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        margin-bottom: 15px;
+    }
+
+    .cabecalho {
+        width: 100%;
+        text-align: center;
+        padding: 30px;
+        margin-bottom: 25px;
+        border-radius: 12px;
+        background-color: #212529;
+        border: 1px solid #444;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .cabecalho h1 {
+        margin-bottom: 10px;
+        color: white;
+        font-size: 2.2rem;
+        font-weight: 700;
+    }
+
+    .cabecalho p {
+        margin-bottom: 20px;
+        color: #d1d5db;
+        font-size: 1.1rem;
+    }
+
+    .cabecalho .shiny-input-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .cabecalho label {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .texto-upload {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .upload-centralizado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+    """),
+
+    ui.div(
+    {"class": "cabecalho"},
+
+    ui.h1("📊 Dashboard Estatístico"),
+
+    ui.p(
+        "Faça o upload de um arquivo CSV para iniciar as análises."
+    ),
+
+    ui.div(
+    ui.p("Selecione um arquivo CSV", class_="texto-upload"),
 
     ui.input_file(
         "arquivo",
-        "Selecione um arquivo CSV",
+        "",
         accept=[".csv"]
     ),
 
-    ui.hr(),
+    class_="upload-centralizado"
+    ),
+),
 
     ui.navset_tab(
 
@@ -109,12 +185,16 @@ app_ui = ui.page_fluid(
                     )
                 ),
 
-                ui.card(
-                    ui.h4("Resultado"),
-                    ui.output_text_verbatim("resultado_teste")
-                )
+            ui.card(
+                ui.h4("Resultado"),
+                ui.output_text_verbatim("resultado_teste")
             )
-        ),
+
+        ),  
+            ui.card(
+                ui.output_plot("grafico_teste")
+            )
+    ),  
 
         
         # ABA 3
@@ -404,6 +484,94 @@ p-valor: {p:.6f}
 
 Decisão: {decisao}
 """
+    @output
+    @render.plot
+    def grafico_teste():
+
+        df = dados()
+
+        if df is None:
+            return
+
+        coluna = input.var_teste()
+
+        if coluna not in df.columns:
+            return
+
+        serie = df[coluna].dropna()
+
+        media = serie.mean()
+        n = len(serie)
+
+        mu0 = input.mu0()
+        sigma = np.sqrt(input.variancia())
+
+        z = (media - mu0) / (sigma / np.sqrt(n))
+
+        tipo = input.tipo_teste()
+        alpha = input.alpha()
+
+        x = np.linspace(-4, 4, 500)
+        y = norm.pdf(x)
+
+        fig, ax = plt.subplots(figsize=(8, 4))
+
+        # Curva normal
+        ax.plot(x, y, linewidth=2)
+
+        # Linha do Z calculado
+        if abs(z) <= 5:
+            ax.axvline(
+                z,
+                linestyle="--",
+                linewidth=2,
+                label=f"Z = {z:.2f}"
+            )
+        else:
+            ax.text(
+                0.98,
+                0.95,
+                f"Z = {z:.2f}\n(fora da escala)",
+                transform=ax.transAxes,
+                ha="right",
+                va="top",
+                bbox=dict(boxstyle="round")
+            )
+
+        if tipo == "bilateral":
+
+            z_crit = norm.ppf(1 - alpha / 2)
+
+            ax.fill_between(x, y, where=(x <= -z_crit), alpha=0.3)
+            ax.fill_between(x, y, where=(x >= z_crit), alpha=0.3)
+
+            ax.axvline(-z_crit, linestyle=":")
+            ax.axvline(z_crit, linestyle=":")
+
+        elif tipo == "direita":
+
+            z_crit = norm.ppf(1 - alpha)
+
+            ax.fill_between(x, y, where=(x >= z_crit), alpha=0.3)
+            ax.axvline(z_crit, linestyle=":")
+
+        else:  # esquerda
+
+            z_crit = norm.ppf(alpha)
+
+            ax.fill_between(x, y, where=(x <= z_crit), alpha=0.3)
+            ax.axvline(z_crit, linestyle=":")
+
+        ax.set_title("Teste Z - Distribuição Normal")
+        ax.set_xlabel("Valor Z")
+        ax.set_ylabel("Densidade")
+
+        ax.set_xlim(-5, 5)
+
+        if abs(z) <= 5:
+            ax.legend()
+
+        return fig
 
 
     
