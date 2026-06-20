@@ -313,7 +313,38 @@ def server(input, output, session):
         )
 
 
-    
+
+    # AJUSTA O SLIDER DE μ₀ À ESCALA DA VARIÁVEL SELECIONADA
+
+    @reactive.effect
+    def atualizar_slider_mu0():
+
+        df = dados()
+        coluna = input.var_teste()
+
+        if df is None or coluna not in df.columns:
+            return
+
+        serie = df[coluna].dropna()
+
+        if serie.empty:
+            return
+
+        minimo = float(serie.min())
+        maximo = float(serie.max())
+        media = float(serie.mean())
+
+        margem = (maximo - minimo) * 0.5 or abs(media) * 0.5 or 1
+
+        ui.update_slider(
+            "mu0",
+            min=minimo - margem,
+            max=maximo + margem,
+            value=media
+        )
+
+
+
     # ANÁLISE DESCRITIVA
 
     @output
