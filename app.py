@@ -11,69 +11,7 @@ from sklearn.metrics import r2_score
 
 app_ui = ui.page_fluid(
 
-    ui.tags.style(
-    """
-    body {
-        background-color: #181818;
-    }
-
-    .card {
-        border-radius: 12px;
-        padding: 16px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        margin-bottom: 15px;
-    }
-
-    .cabecalho {
-        width: 100%;
-        text-align: center;
-        padding: 30px;
-        margin-bottom: 25px;
-        border-radius: 12px;
-        background-color: #212529;
-        border: 1px solid #444;
-
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .cabecalho h1 {
-        margin-bottom: 10px;
-        color: white;
-        font-size: 2.2rem;
-        font-weight: 700;
-    }
-
-    .cabecalho p {
-        margin-bottom: 20px;
-        color: #d1d5db;
-        font-size: 1.1rem;
-    }
-
-    .cabecalho .shiny-input-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .cabecalho label {
-        width: 100%;
-        text-align: center;
-        margin-bottom: 8px;
-    }
-
-    .texto-upload {
-        text-align: center;
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
-    .upload-centralizado {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-    """),
+    ui.include_css("style/styles.css"),
 
     ui.div(
     {"class": "cabecalho"},
