@@ -7,6 +7,16 @@ from scipy.stats import norm
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
+# BASES DE DADOS PRÉ-CARREGADAS
+
+BASES_PRONTAS = {
+    "Pinguins (medidas corporais)": "data/penguins.csv",
+    "Gorjetas em restaurante": "data/tips.csv",
+    "Flores Iris (medidas das pétalas/sépalas)": "data/iris.csv",
+}
+
+OPCAO_UPLOAD = "Minha própria planilha (upload)"
+
 # INTERFACE
 
 app_ui = ui.page_fluid(
@@ -19,16 +29,26 @@ app_ui = ui.page_fluid(
     ui.h1("📊 Dashboard Estatístico"),
 
     ui.p(
-        "Faça o upload de um arquivo CSV para iniciar as análises."
+        "Escolha uma base de dados pronta ou envie a sua própria planilha CSV para iniciar as análises."
     ),
 
     ui.div(
-    ui.p("Selecione um arquivo CSV", class_="texto-upload"),
+    ui.input_select(
+        "fonte_dados",
+        "Base de dados",
+        choices=list(BASES_PRONTAS.keys()) + [OPCAO_UPLOAD],
+    ),
 
-    ui.input_file(
-        "arquivo",
-        "",
-        accept=[".csv"]
+    ui.panel_conditional(
+        f"input.fonte_dados === '{OPCAO_UPLOAD}'",
+
+        ui.p("Selecione um arquivo CSV", class_="texto-upload"),
+
+        ui.input_file(
+            "arquivo",
+            "",
+            accept=[".csv"]
+        ),
     ),
 
     class_="upload-centralizado"
@@ -214,6 +234,14 @@ def server(input, output, session):
 
     @reactive.calc
     def dados():
+
+        fonte = input.fonte_dados()
+
+        if fonte in BASES_PRONTAS:
+            try:
+                return pd.read_csv(BASES_PRONTAS[fonte])
+            except FileNotFoundError:
+                return None
 
         arquivo = input.arquivo()
 
